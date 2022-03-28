@@ -1,15 +1,25 @@
-#include <iostream>
 #include "task.h"
 
 class Scheduler {
     public:
-        vector<Task> taskSet;
-        vector<Task> queue;
+        std::vector<Task> taskSet;
+        std::vector<Task> queue;
         Task runningTask;
-        float cpuSpeed;         // Assume normalized values from BATS paper
+        float cpuSpeedSet[5];         // Assume normalized values from BATS paper
+        float currentSpeed;
 
         /*
-         * Initialize stuff
+         * Constructor for Scheduler
+         * - Setup CPU Speed, taskSet and queue
+         */
+        Scheduler(std::vector<Task> TaskSet, std::vector<Task> Queue, float *SpeedSet) {
+            taskSet = TaskSet;
+            queue = Queue;
+            cpuSpeedSet = SpeedSet;
+        }
+
+        /*
+         * Initialize the task set
          * - calculates LCM of task set
          * - calculates initial LOW speed
          */
