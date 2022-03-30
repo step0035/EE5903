@@ -7,16 +7,14 @@ class Scheduler {
         Task runningTask;
         float cpuSpeedSet[5];         // Assume normalized values from BATS paper
         float currentSpeed;
+        uint8_t resourcesList;
 
         /*
          * Constructor for Scheduler
+         * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(std::vector<Task> TaskSet, std::vector<Task> Queue, float *SpeedSet) {
-            taskSet = TaskSet;
-            queue = Queue;
-            cpuSpeedSet = SpeedSet;
-        }
+        Scheduler::Scheduler(uint32_t no_of_tasks, float *SpeedSet, uint8_t no_of_speeds, uint8_t *ResourceSet, uint8_t no_of_resources);
 
         /*
          * Initialize the task set
