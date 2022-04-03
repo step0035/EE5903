@@ -31,11 +31,11 @@ class Scheduler {
          * Starts the scheduler and start counting up
          * - calls background_check every unit time
          */
-        void start_scheduler(void);
+        void Start(void);
 
     private:
         int upTime = 0;
-        int totalPC;        // Total power consumption
+        int totalPC = 0;        // Total power consumption
 
         /*
          * Calculate the LCM of tasks

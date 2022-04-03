@@ -52,6 +52,11 @@ void Scheduler::Init(void) {
     LCM = calculate_LCM();
 }
 
+void Scheduler::Start(void) {
+    while (upTime < LCM) {
+
+    }
+}
 /*
  * Private Functions
  */
