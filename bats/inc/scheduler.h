@@ -1,3 +1,6 @@
+#include <cstdint>
+#include <vector>
+#include <array>
 #include "task.h"
 
 class Scheduler {
@@ -5,23 +8,23 @@ class Scheduler {
         std::vector<Task> taskSet;
         std::vector<Task> queue;
         Task runningTask;
-        float cpuSpeedSet[5];         // Assume normalized values from BATS paper
+        std::array<float, 7> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
-        uint8_t resourcesList;
+        std::array<uint8_t, 5> resourcesList;
 
         /*
          * Constructor for Scheduler
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler::Scheduler(uint32_t no_of_tasks, float *SpeedSet, uint8_t no_of_speeds, uint8_t *ResourceSet, uint8_t no_of_resources);
+        Scheduler(uint32_t no_of_tasks, std::array<float, 7> SpeedSet, std::array<uint8_t, 5> ResourceSet);
 
         /*
          * Initialize the task set
          * - calculates LCM of task set
          * - calculates initial LOW speed
          */
-        void init(void);
+        void Init(void);
 
         /*
          * Starts the scheduler and start counting up
@@ -31,12 +34,12 @@ class Scheduler {
 
     private:
         uint32_t upTime;
-        uint32_t totalPC        // Total power consumption
+        uint32_t totalPC;        // Total power consumption
 
         /*
          * Calculate the LCM of tasks
          */
-        uint32_t calculate_LCM(vector<Task> taskSet);
+        uint32_t calculate_LCM(std::vector<Task> taskSet);
 
         /*
          * Background checks the arrival of tasks and events
@@ -49,12 +52,12 @@ class Scheduler {
         /*
          * Calculate the initial LOW speed
          */
-        float calculate_initial_speed(vector<Task> taskSet);
+        float calculate_initial_speed(std::vector<Task> taskSet);
 
         /*
          * Calculate the HIGH speed
          */
-        float calculate_high_speed(vector<Task> taskSet);
+        float calculate_high_speed(std::vector<Task> taskSet);
 
         /*
          * Update system state
@@ -79,4 +82,4 @@ class Scheduler {
          * - sort by priority
          */
         void update_queue_state(void); 
-}
+};

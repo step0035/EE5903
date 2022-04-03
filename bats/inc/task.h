@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <set>
 
 class Task {
@@ -10,4 +11,4 @@ class Task {
         uint8_t waitTime;                   // Total time when task has arrived but not currently executing
         bool blocked;
         std::set<uint8_t> sharedResources;
-}
+};
