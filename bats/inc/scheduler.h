@@ -10,14 +10,14 @@ class Scheduler {
         Task runningTask;
         std::array<float, 7> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
-        std::array<uint8_t, 5> resourcesList;
+        std::array<int, 5> resourcesList;
 
         /*
          * Constructor for Scheduler
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(uint32_t no_of_tasks, std::array<float, 7> SpeedSet, std::array<uint8_t, 5> ResourceSet);
+        Scheduler(int no_of_tasks, std::array<float, 7> SpeedSet, std::array<int, 5> ResourceSet);
 
         /*
          * Initialize the task set
@@ -33,13 +33,13 @@ class Scheduler {
         void start_scheduler(void);
 
     private:
-        uint32_t upTime;
-        uint32_t totalPC;        // Total power consumption
+        int upTime;
+        int totalPC;        // Total power consumption
 
         /*
          * Calculate the LCM of tasks
          */
-        uint32_t calculate_LCM(std::vector<Task> taskSet);
+        int calculate_LCM(std::vector<Task> taskSet);
 
         /*
          * Background checks the arrival of tasks and events
