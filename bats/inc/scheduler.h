@@ -11,6 +11,7 @@ class Scheduler {
         std::array<float, 7> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
         std::array<int, 5> resourcesList;
+        long long int LCM;
 
         /*
          * Constructor for Scheduler
@@ -33,13 +34,13 @@ class Scheduler {
         void start_scheduler(void);
 
     private:
-        int upTime;
+        int upTime = 0;
         int totalPC;        // Total power consumption
 
         /*
          * Calculate the LCM of tasks
          */
-        int calculate_LCM(std::vector<Task> taskSet);
+        long long int calculate_LCM(void);
 
         /*
          * Background checks the arrival of tasks and events
@@ -82,4 +83,14 @@ class Scheduler {
          * - sort by priority
          */
         void update_queue_state(void); 
+
+        /*
+         * Greatest Common Divisor
+         * - helper function for calculate_LCM()
+         */
+        int gcd(int a, int b) {
+            if (b == 0)
+                return a;
+            return gcd(b, a % b);
+        }
 };

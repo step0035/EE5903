@@ -10,4 +10,11 @@ class Task {
         int waitTime;                   // Total time when task has arrived but not currently executing
         bool blocked;
         std::set<int> sharedResources;
+
+        /*
+         * Operator to sort Task by arrivalTime
+         */
+        bool operator< (const Task &other) const {
+            return arrivalTime < other.arrivalTime;
+        }
 };

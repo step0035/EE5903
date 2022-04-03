@@ -7,12 +7,12 @@ Scheduler::Scheduler(int no_of_tasks, std::array<float, 7> SpeedSet, std::array<
     // Initialize taskSet
     std::random_device rd;      // for seeding the engine
     std::default_random_engine generator(rd());
-    std::uniform_int_distribution<int> arrivaltime_dist(0, 100);
-    std::uniform_int_distribution<int> period_dist(0, 100);
+    std::uniform_int_distribution<int> arrivaltime_dist(0, 20);
+    std::uniform_int_distribution<int> period_dist(1, 10);
     std::uniform_int_distribution<int> wcc_dist(0, 100);
     std::uniform_int_distribution<int> resource_dist(0, ResourceSet.size());
 
-    std::cout << "no_of_tasks = " << no_of_tasks << std::endl;
+    std::cout << "no_of_tasks = " << no_of_tasks << std::endl << std::endl;
     for (int i=0; i<no_of_tasks; i++) {
         Task T;
         T.arrivalTime = arrivaltime_dist(generator);
@@ -48,5 +48,18 @@ Scheduler::Scheduler(int no_of_tasks, std::array<float, 7> SpeedSet, std::array<
 }
 
 void Scheduler::Init(void) {
+    std::sort(taskSet.begin(), taskSet.end());
+    LCM = calculate_LCM();
+}
 
+/*
+ * Private Functions
+ */
+
+long long int Scheduler::calculate_LCM(void) {
+    int temp_LCM = taskSet[0].period;
+    for (std::size_t i = 1; i < taskSet.size(); i++) {
+        temp_LCM = (taskSet[i].period * temp_LCM) / (gcd(taskSet[i].period, temp_LCM));
+    }
+    return temp_LCM;
 }
