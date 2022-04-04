@@ -8,17 +8,19 @@ class Scheduler {
         std::vector<Task> taskSet;
         std::vector<Task> queue;
         Task runningTask;
-        std::array<float, 7> cpuSpeedSet;         // Assume normalized values from BATS paper
+        std::array<float, 6> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
+        float LowSpeed;                           // Initial LOW speed
         std::array<int, 5> resourcesList;
         long long int LCM;
+        int systemCeiling = 0;                    // 0 when no resources are used
 
         /*
          * Constructor for Scheduler
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(int no_of_tasks, std::array<float, 7> SpeedSet, std::array<int, 5> ResourceSet);
+        Scheduler(int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet);
 
         /*
          * Initialize the task set
@@ -53,7 +55,7 @@ class Scheduler {
         /*
          * Calculate the initial LOW speed
          */
-        float calculate_initial_speed(std::vector<Task> taskSet);
+        float calculate_low_speed(void);
 
         /*
          * Calculate the HIGH speed
