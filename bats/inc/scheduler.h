@@ -27,7 +27,6 @@ class Scheduler {
 
         /*
          * Initialize the task set
-         * - calculates LCM of task set
          * - calculates initial LOW speed
          */
         void Init(void);
@@ -51,11 +50,6 @@ class Scheduler {
         void SortQueue(void);
 
     private:
-
-        /*
-         * Calculate the LCM of tasks
-         */
-        long long int calculate_LCM(void);
 
         /*
          * Background checks the arrival of tasks and events
@@ -98,14 +92,4 @@ class Scheduler {
          * - sort by priority
          */
         void update_queue_state(void); 
-
-        /*
-         * Greatest Common Divisor
-         * - helper function for calculate_LCM()
-         */
-        int gcd(int a, int b) {
-            if (b == 0)
-                return a;
-            return gcd(b, a % b);
-        }
 };

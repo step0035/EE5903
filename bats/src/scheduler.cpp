@@ -99,16 +99,6 @@ void Scheduler::SortQueue(void) {
  * Private Functions
  */
 
-long long int Scheduler::calculate_LCM(void) {
-    int temp_LCM = taskSet[0].period;
-
-    for (std::size_t i = 1; i < taskSet.size(); i++) {
-        temp_LCM = (taskSet[i].period * temp_LCM) / (gcd(taskSet[i].period, temp_LCM));
-    }
-
-    return temp_LCM;
-}
-
 float Scheduler::calculate_low_speed(void) {
     float low_speed;
     float temp = 0;
