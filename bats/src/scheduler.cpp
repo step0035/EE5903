@@ -36,6 +36,8 @@ Scheduler::Scheduler(int no_of_tasks, std::array<float, 6> SpeedSet, std::array<
     taskSet.push_back(T);
     std::cout << std::endl;
     }
+    // Sort tasks by arrivalTime in non-descending order
+    SortTaskSet();
 
     // Initialize cpuSpeedSet
     cpuSpeedSet = SpeedSet;
@@ -46,13 +48,51 @@ Scheduler::Scheduler(int no_of_tasks, std::array<float, 6> SpeedSet, std::array<
 }
 
 void Scheduler::Init(void) {
-    std::sort(taskSet.begin(), taskSet.end());
-    //LCM = calculate_LCM();
     LowSpeed = calculate_low_speed();
 }
 
 void Scheduler::Start(void) {
+    while (upTime < duration) {
+        nextArriveTime = taskSet[0].arrivalTime;
+        upTime += (taskSet[0].arrivalTime - upTime);
 
+        // Append task that arrived into queue
+        Task temp_task = taskSet[0];
+        queue.push_back(temp_task);
+        SortQueue();
+
+        // Replace the task in taskSet with the next instance
+        taskSet.erase(taskSet.begin());
+        temp_task.arrivalTime += temp_task.period;
+        taskSet.push_back(temp_task);
+        SortTaskSet();
+
+        // If no tasks are running, run the first task on ready queue
+        if (runningTask == NULL) {
+            runningTask = &queue[0];
+        }
+
+    }
+}
+
+void Scheduler::SortTaskSet(void) {
+    std::sort(
+                taskSet.begin(), 
+                taskSet.end(),
+                [](const Task &lhs, const Task &rhs) {
+                    return lhs.arrivalTime < rhs.arrivalTime;
+                }
+            );
+}
+
+void Scheduler::SortQueue(void) {
+    std::sort(
+                queue.begin(), 
+                queue.end(),
+                [](const Task &lhs, const Task &rhs) {
+                    return lhs.period < rhs.period;
+                }
+            );
 }
 
 /*

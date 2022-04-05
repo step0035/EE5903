@@ -11,11 +11,4 @@ class Task {
         float B;                        // Remaining critical section computation time
         bool blocked = false;
         int Resource;
-
-        /*
-         * Operator to sort Task by arrivalTime
-         */
-        bool operator< (const Task &other) const {
-            return arrivalTime < other.arrivalTime;
-        }
 };

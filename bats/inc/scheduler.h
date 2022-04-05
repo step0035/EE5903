@@ -7,13 +7,16 @@ class Scheduler {
     public:
         std::vector<Task> taskSet;
         std::vector<Task> queue;
-        Task runningTask;
+        Task *runningTask = NULL;
         std::array<float, 6> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
         float LowSpeed;                           // Initial LOW speed
         std::array<int, 5> resourcesList;
-        long long int LCM;
         int systemCeiling = 0;                    // 0 when no resources are used
+        float duration = 0;
+        float upTime = 0;
+        int totalPC = 0;        // Total power consumption
+        float nextArriveTime;
 
         /*
          * Constructor for Scheduler
@@ -35,9 +38,19 @@ class Scheduler {
          */
         void Start(void);
 
+        /*
+         * Sort the taskSet by arrivalTime in non-descending order
+         */
+        void SortTaskSet(void);
+
+        /*
+         * Sort the queue by period in non-descending order
+         * - Tasks with smaller period means they have higher preemption level
+         * - This ensures that the task to run next is always at the front of the queue
+         */
+        void SortQueue(void);
+
     private:
-        int upTime = 0;
-        int totalPC = 0;        // Total power consumption
 
         /*
          * Calculate the LCM of tasks
