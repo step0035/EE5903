@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <vector>
 #include <array>
+#include <limits>
 #include "task.h"
 
 class Scheduler {
@@ -12,8 +13,8 @@ class Scheduler {
         float currentSpeed;
         float LowSpeed;                           // Initial LOW speed
         std::array<int, 5> resourcesList;
-        int systemCeiling = 0;                    // 0 when no resources are used
-        float duration = 0;
+        int systemCeiling = std::numeric_limits<int>::max(); // systemCeiling should be 0 when no resources are used, but since we are comparing the period, we init this with infinity
+        float duration;
         float upTime = 0;
         int totalPC = 0;        // Total power consumption
         float nextArriveTime;
@@ -23,7 +24,7 @@ class Scheduler {
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet);
+        Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet);
 
         /*
          * Initialize the task set

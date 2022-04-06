@@ -4,7 +4,10 @@
 #include <algorithm>
 #include "scheduler.h"
 
-Scheduler::Scheduler(int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet) {
+Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet) {
+    // Set duration
+    duration = Duration;
+
     // Initialize taskSet
     std::random_device rd;      // for seeding the engine
     std::default_random_engine generator(rd());
@@ -53,25 +56,47 @@ void Scheduler::Init(void) {
 
 void Scheduler::Start(void) {
     while (upTime < duration) {
-        nextArriveTime = taskSet[0].arrivalTime;
-        upTime += (taskSet[0].arrivalTime - upTime);
+        std::cout << "upTime" << upTime << std::endl;
+        nextArriveTime = (float) taskSet[0].arrivalTime;    // Next task arrive at this time
+        float execTime = nextArriveTime - upTime;           // Execution time while waiting for next task arrival
+        // TODO: Run until next task arrival or until current task finish, whichever comes first
 
-        // Append task that arrived into queue
-        Task temp_task = taskSet[0];
-        queue.push_back(temp_task);
-        SortQueue();
+        if (runningTask != NULL) {
+            runningTask->burstTime += execTime;
+            runningTask->rc -= (currentSpeed * execTime);
+        }
 
-        // Replace the task in taskSet with the next instance
-        taskSet.erase(taskSet.begin());
-        temp_task.arrivalTime += temp_task.period;
-        taskSet.push_back(temp_task);
-        SortTaskSet();
+        upTime += execTime;
+
+        // There may be multiple tasks arriving at the same time
+        while (taskSet[0].arrivalTime <= nextArriveTime) {
+            // Append task that arrived into queue
+            Task temp_task = taskSet[0];
+            queue.push_back(temp_task);
+            SortQueue();
+
+            // Replace the task in taskSet with the next instance
+            taskSet.erase(taskSet.begin());
+            temp_task.arrivalTime += temp_task.period;
+            taskSet.push_back(temp_task);
+            SortTaskSet();
+        }
 
         // If no tasks are running, run the first task on ready queue
         if (runningTask == NULL) {
             runningTask = &queue[0];
+            queue.erase(queue.begin());
         }
-
+        // check queue if any task fit the criteria to preempt the current task
+        // 1. It is the highest priority task in the queue (compare using period)
+        // 2. It has a preemption level higher than system ceiling (compare using period)
+        else {  
+            if ((queue[0].period < runningTask->period) && (queue[0].period < systemCeiling)) {
+                queue.push_back(*runningTask);
+                runningTask = &queue[0];
+                SortQueue();
+            }
+        }
     }
 }
 
