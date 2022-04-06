@@ -1,5 +1,8 @@
+#include "resource.h"
+
 class Task {
     public:
+        int index;
         int arrivalTime;                // Range from 0 to 100
         int period;                     // Relative deadline is assume to be the period, the smaller the period, the higher the preemption level
         int preemptionLevel;            // Derived from period, preemptionLevel = ceil(1 / period), since we don't want it to be 0
@@ -11,5 +14,13 @@ class Task {
         int criticalEnd;                // TODO: Assume whole burst time?
         float B;                        // Remaining critical section computation time
         bool blocked = false;
-        int Resource;
+        Resource resource;
+
+        void LockResource(void) {
+            resource.locked = true;
+        }
+
+        void UnlockResource(void) {
+            resource.locked = false;
+        }
 };

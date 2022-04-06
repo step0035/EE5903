@@ -7,24 +7,26 @@
 class Scheduler {
     public:
         std::vector<Task> taskSet;
+        std::vector<Task> initialTaskSet;         // Backup of the initial task set, used for calculating the high speed
         std::vector<Task> queue;
         Task *runningTask = NULL;
         std::array<float, 6> cpuSpeedSet;         // Assume normalized values from BATS paper
         float currentSpeed;
         float LowSpeed;                           // Initial LOW speed
-        std::array<int, 5> resourcesList;
+        std::vector<Resource> resourceList;
         int systemCeiling = std::numeric_limits<int>::max(); // systemCeiling should be 0 when no resources are used, but since we are comparing the period, we init this with infinity
         float duration;
         float upTime = 0;
         int totalPC = 0;        // Total power consumption
         float nextArriveTime;
+        bool currentTaskFinished = false;
 
         /*
          * Constructor for Scheduler
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, std::array<int, 5> ResourceSet);
+        Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, int no_of_resources);
 
         /*
          * Initialize the task set
@@ -53,14 +55,6 @@ class Scheduler {
     private:
 
         /*
-         * Background checks the arrival of tasks and events
-         * - checks if tasks have arrived, if yes, push to queue
-         * - checks if preemption should take place
-         * - checks for potential blocking
-         */
-        void background_check(void);
-
-        /*
          * Calculate the initial LOW speed
          */
         float calculate_low_speed(void);
@@ -68,7 +62,7 @@ class Scheduler {
         /*
          * Calculate the HIGH speed
          */
-        float calculate_high_speed(std::vector<Task> taskSet);
+        float calculate_high_speed(Task T);
 
         /*
          * Update system state
