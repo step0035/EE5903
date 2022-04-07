@@ -46,6 +46,11 @@ class Scheduler {
         void SortTaskSet(void);
 
         /*
+         * Sort the taskSet by period in non-descending order
+         */
+        void SortTaskSet_byPeriod(void);
+
+        /*
          * Sort the queue by period in non-descending order
          * - Tasks with smaller period means they have higher preemption level
          * - This ensures that the task to run next is always at the front of the queue
@@ -63,28 +68,14 @@ class Scheduler {
          * Calculate the HIGH speed
          */
         float calculate_high_speed(Task T);
+        
+        float calculate_exec_time(void);
 
-        /*
-         * Update system state
-         * - update the CPU speed if needed
-         * - update the upTime and totalPC
-         */
-        void update_system_state(void); 
+        int check_earliest_queue_task(void);
 
-        /*
-         * Update the state of the tasks in the task set
-         */
-        void update_task_state(void); 
+        void handle_finished_task(void); 
 
-        /*
-         * Update the state of the resources
-         */
-        void update_resources_state(void); 
+        void handle_late_task(int index);
 
-        /*
-         * Update the state of the queue
-         * - check for task arrivals and add them to queue
-         * - sort by priority
-         */
-        void update_queue_state(void); 
+        void InitResources(void);
 };
