@@ -17,9 +17,11 @@ class Scheduler {
         int systemCeiling = std::numeric_limits<int>::max(); // systemCeiling should be 0 when no resources are used, but since we are comparing the period, we init this with infinity
         float duration;
         float upTime = 0;
-        int totalPC = 0;        // Total power consumption
+        float totalPC = 0;        // Total power consumption
         float nextArriveTime;
         bool currentTaskFinished = false;
+        int totalTaskFinished = 0;
+        int totalLateCount = 0;
 
         /*
          * Constructor for Scheduler
@@ -78,4 +80,6 @@ class Scheduler {
         void handle_late_task(int index);
 
         void InitResources(void);
+
+        float get_wattage(float);
 };

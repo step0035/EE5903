@@ -2,8 +2,8 @@
 #include "scheduler.h"
 
 int main(void) {
-    float duration = 2000.0;
-    int no_of_tasks = 200;
+    float duration = 100000.0;
+    int no_of_tasks = 100;
     int no_of_resources = 2;
     std::array<float, 6> SpeedSet = {1.0, 0.83, 0.67, 0.50, 0.33, 0.17};
     //std::array<int, 5> ResourceSet = {1, 2, 3, 4, 5};
@@ -15,6 +15,10 @@ int main(void) {
     std::cout << "LowSpeed: " << scheduler.LowSpeed << std::endl;
     std::cout << "duration: " << scheduler.duration << std::endl;
     scheduler.Start();
+    std::cout << "totalLateCount: " << scheduler.totalLateCount << std::endl;
+    std::cout << "totalTaskFinished: " << scheduler.totalTaskFinished << std::endl;
+    std::cout << "LowSpeed: " << scheduler.LowSpeed << std::endl;
+    std::cout << "totalPC: " << scheduler.totalPC << std::endl;
 }
 
 

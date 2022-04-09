@@ -19,9 +19,9 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
     std::random_device rd;
     //std::default_random_engine generator(rd());     // use this for randomized seeding
     std::default_random_engine generator(1);
-    std::uniform_int_distribution<int> arrivaltime_dist(0, 20);
+    std::uniform_int_distribution<int> arrivaltime_dist(0, 1000);
     std::uniform_int_distribution<int> period_dist(20, 5000);
-    std::uniform_real_distribution<float> wcc_dist(1, 10);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
+    //std::uniform_real_distribution<float> wcc_dist(1, 5);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
     std::uniform_int_distribution<int> resource_dist(0, resourceList.size() - 1);
 
     std::cout << "no_of_tasks = " << no_of_tasks << std::endl << std::endl;
@@ -34,7 +34,7 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
         T.period = period_dist(generator);
         //std::cout << "period = " << T.period << std::endl;
 
-        //std::uniform_real_distribution<float> wcc_dist(0.05, T.period * 0.17);
+        std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
         // TODO: Create an inverse proportion equation for preemption level, or place categorically according to period, or just scratch this and compare period
         //T.preemptionLevel = (int) std::ceil(1.0 / T.period);
         //std::cout << "preemptionLevel = " << T.preemptionLevel << std::endl;
@@ -80,17 +80,13 @@ void Scheduler::Start(void) {
     while (upTime < duration) {
         std::cout << "upTime: " << upTime << std::endl;
 
+        if (currentSpeed > LowSpeed)
+            std::cout << "================================================HIGHER THAN LOW SPEED===============================================\n";
+
         float execTime = calculate_exec_time();
 
         // TODO: Debug why upTime becomes negative
         upTime += execTime;
-
-#if 0
-        if (currentTaskFinished) {
-            std::cout << "Task " << runningTask->index << " finished\n";
-            runningTask = NULL;
-        }
-#endif
 
         // There may be multiple tasks arriving at the same time TODO: Check if need to loop
         // TODO: After task finished, need to check blocked queue for eligible tasks
@@ -105,8 +101,6 @@ void Scheduler::Start(void) {
             temp_task.arrivalTime += temp_task.period;
             taskSet.push_back(temp_task);
             SortTaskSet();
-            
-            //currentTaskFinished = false;
         }
 
         // TODO: From here onwards, consider moving to a private function called ContextSwitch
@@ -127,9 +121,9 @@ void Scheduler::Start(void) {
                     runningTask = &queue[0];
                     SortQueue();
                 }
-                // TODO: First candidate task is blocked, check if another task in the queue is eligible to preempt
                 else {
                     // Calculate high speed
+                    queue[0].blocked = true;
                     float newSpeed = calculate_high_speed(queue[0]);
                     // Set speed to high if calculated high speed is higher than currentSpeed
                     if (newSpeed > currentSpeed) {
@@ -194,6 +188,9 @@ float Scheduler::calculate_low_speed(void) {
         target_speed += (taskSet[i].wcc / taskSet[i].period);
     }
 
+    //target_speed /= taskSet.size();
+    std::cout << "target_speed: " << target_speed << std::endl;
+
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
         std::cout << "low_speed now is: " << cpuSpeedSet[i] << std::endl;
         low_speed = cpuSpeedSet[i];
@@ -207,7 +204,7 @@ float Scheduler::calculate_low_speed(void) {
 float Scheduler::calculate_high_speed(Task T) {
     int period = T.period;
     int index = T.index;
-    float B = runningTask->rc;          // Remaining computation of critical section
+    float B = runningTask->rc / currentSpeed;          // Remaining computation of critical section
     float sum_of_product = 0;
 
     for (std::size_t i = 0; i < initialTaskSet.size(); i++) {
@@ -260,18 +257,20 @@ float Scheduler::calculate_exec_time(void) {
 
     float execTime = std::min({execTime_arrive, execTime_finish, execTime_queue});
 
+    // Add to total power consumption (Joules)
+    float wattage = get_wattage(currentSpeed);
+    std::cout << "wattage: " << wattage << std::endl;
+    totalPC += execTime * wattage; 
+
     if (execTime == execTime_finish) {
         runningTask->burstTime += execTime;
         runningTask->rc = 0;
-        // TODO: change to reset the finished task instead of using flag
-        //currentTaskFinished = true;
         handle_finished_task();
     }
 
     if (execTime == execTime_queue) {
         runningTask->burstTime += execTime;
         runningTask->rc -= (currentSpeed * execTime);
-        // Reset the late task
         handle_late_task(queueTask_index);  //queueTask_index won't be -1 in this case
     }
 
@@ -307,6 +306,15 @@ void Scheduler::handle_finished_task(void) {
     runningTask->rc = runningTask->wcc;
     runningTask->burstTime = 0;
 #endif
+
+    // If the task was previously blocked, change back to low speed upon completion 
+    if (runningTask->blocked) {
+        runningTask->blocked = false;
+        currentSpeed = LowSpeed;
+        std::cout << "currentSpeed switched back to " << LowSpeed << std::endl;
+    }
+
+    totalTaskFinished += 1;
     runningTask = NULL;
     systemCeiling = std::numeric_limits<int>::max();
 }
@@ -316,13 +324,19 @@ void Scheduler::handle_late_task(int index) {
     std::cout << "Task " << lateTask.index << " is late\n";
     // TODO: Check if need to erase from queue
     queue.erase(std::next(queue.begin(), index));
-#if 0
-    lateTask.arrivalTime += lateTask.period;
-    lateTask.rc = lateTask.wcc;
-    lateTask.burstTime = 0;
-    runningTask->arrivalTime += runningTask->period;
-    runningTask->rc = runningTask->wcc;
-    runningTask->burstTime = 0;
-    runningTask = NULL;
-#endif
+    totalLateCount += 1;
+}
+
+float Scheduler::get_wattage(float speed) {
+    if (speed == cpuSpeedSet[5])
+        return 0.925;
+    if (speed == cpuSpeedSet[4])
+        return 0.747;
+    if (speed == cpuSpeedSet[3])
+        return 0.570;
+    if (speed == cpuSpeedSet[2])
+        return 0.390;
+    if (speed == cpuSpeedSet[1])
+        return 0.279;
+    return 0.116;
 }
