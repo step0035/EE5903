@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "scheduler.h"
 
-Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, int no_of_resources) {
+Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
     // Set duration
     duration = Duration;
 
@@ -30,23 +30,16 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
 
         T.arrivalTime = arrivaltime_dist(generator);
         //T.arrivalTime = 0;
-        //std::cout << "arrivalTime = " << T.arrivalTime << std::endl;
 
         T.period = period_dist(generator);
-        //std::cout << "period = " << T.period << std::endl;
 
         std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
-        // TODO: Create an inverse proportion equation for preemption level, or place categorically according to period, or just scratch this and compare period
-        //T.preemptionLevel = (int) std::ceil(1.0 / T.period);
-        //std::cout << "preemptionLevel = " << T.preemptionLevel << std::endl;
 
         T.wcc = wcc_dist(generator);
-        //std::cout << "wcc = " << T.wcc << std::endl;
 
         T.rc = T.wcc;
 
         T.resource = &resourceList[static_cast<std::size_t> (resource_dist(generator))];
-        //std::cout << "Resource = " << T.Resource << std::endl;
 
     taskSet.push_back(T);
     std::cout << std::endl;
@@ -55,8 +48,7 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
     // Sort tasks by arrivalTime in non-descending order
     SortTaskSet();
 
-    // Initialize cpuSpeedSet
-    cpuSpeedSet = SpeedSet;
+    // Initialize cpuSpeedSet by sorting
     std::sort(cpuSpeedSet.begin(), cpuSpeedSet.end());
 }
 
@@ -66,7 +58,7 @@ void Scheduler::Init(void) {
         taskSet[i].index = i;
     }
 
-    // Backup initial task set
+    // Backup initial task set to be sorted by period
     initialTaskSet = taskSet;
     SortTaskSet_byPeriod();
 
@@ -89,7 +81,6 @@ void Scheduler::Start(void) {
         upTime += execTime;
 
         // There may be multiple tasks arriving at the same time TODO: Check if need to loop
-        // TODO: After task finished, need to check blocked queue for eligible tasks
         while (taskSet[0].arrivalTime <= nextArriveTime) {
             // Append task that arrived into queue
             Task temp_task = taskSet[0];
@@ -189,7 +180,6 @@ float Scheduler::calculate_low_speed(void) {
         target_speed += (taskSet[i].wcc / taskSet[i].period);
     }
 
-    //target_speed /= taskSet.size();
     std::cout << "target_speed: " << target_speed << std::endl;
 
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
@@ -278,10 +268,8 @@ float Scheduler::calculate_exec_time(void) {
     return execTime;
 }
 
-// returns index to task in queue
 int Scheduler::check_earliest_queue_task(void) {
     if (queue.size() <= 0) {
-        // Return infinity if no task in queue
         return -1;
     }
 
@@ -318,7 +306,6 @@ void Scheduler::handle_finished_task(void) {
 void Scheduler::handle_late_task(int index) {
     Task lateTask = queue[index];
     std::cout << "Task " << lateTask.index << " is late\n";
-    // TODO: Check if need to erase from queue
     
     if (lateTask.blocked) {
         lateTask.blocked = false;

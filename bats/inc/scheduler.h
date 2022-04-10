@@ -10,7 +10,7 @@ class Scheduler {
         std::vector<Task> initialTaskSet;         // Backup of the initial task set, used for calculating the high speed
         std::vector<Task> queue;
         Task *runningTask = NULL;
-        std::array<float, 6> cpuSpeedSet;         // Assume normalized values from BATS paper
+        std::array<float, 6> cpuSpeedSet = {1.0, 0.83, 0.67, 0.50, 0.33, 0.17};         // Assume normalized values from BATS paper
         float currentSpeed;
         float LowSpeed;                           // Initial LOW speed
         std::vector<Resource> resourceList;
@@ -28,7 +28,7 @@ class Scheduler {
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet, int no_of_resources);
+        Scheduler(float Duration, int no_of_tasks, int no_of_resources);
 
         /*
          * Initialize the task set
@@ -42,6 +42,7 @@ class Scheduler {
          */
         void Start(void);
 
+    private:
         /*
          * Sort the taskSet by arrivalTime in non-descending order
          */
@@ -59,8 +60,6 @@ class Scheduler {
          */
         void SortQueue(void);
 
-    private:
-
         /*
          * Calculate the initial LOW speed
          */
@@ -71,15 +70,45 @@ class Scheduler {
          */
         float calculate_high_speed(Task T);
         
+        /*
+         * Execute until next scheduling point
+         * - Next task arrives
+         * - Current task finish executing, call @handle_finish_task
+         * - Task in queue becomes late, call @handle_late_task
+         */
         float calculate_exec_time(void);
 
+        /*
+         * Checks which task is next to be late in queue
+         * - Returns index of task
+         * - Returns -1 if no tasks in queue
+         */
         int check_earliest_queue_task(void);
 
+        /*
+         * Called when a task is finished
+         * - Set speed to LOW speed if a blocked task finished executing
+         * - Reset the system ceiling once the task unlocks the resource
+         */
         void handle_finished_task(void); 
 
+        /*
+         * Called when a task missed its deadline
+         * - Discard task from queue
+         */
         void handle_late_task(int index);
 
+        /*
+         * Sets the ceiling for each resource
+         * - Ceiling of a resource is the highest preemption level of a task that requires the resource
+         * - In this case, we use period to determine preemption level
+         * - Lower period => higher preemption level
+         * - Higher period => lower preemption level
+         */
         void InitResources(void);
 
-        float get_wattage(float);
+        /*
+         * Gets the wattage of the running speed
+         */
+        float get_wattage(float speed);
 };
