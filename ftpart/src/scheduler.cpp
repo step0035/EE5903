@@ -21,20 +21,14 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
     for (int i=0; i < no_of_tasks; i++) {
         Task T;
 
-        //T.arrivalTime = arrivaltime_dist(generator);
-        T.arrivalTime = 0;
-        //std::cout << "arrivalTime = " << T.arrivalTime << std::endl;
+        T.arrivalTime = arrivaltime_dist(generator);
+        //T.arrivalTime = 0;
 
         T.period = period_dist(generator);
-        //std::cout << "period = " << T.period << std::endl;
 
         std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
-        // TODO: Create an inverse proportion equation for preemption level, or place categorically according to period, or just scratch this and compare period
-        //T.preemptionLevel = (int) std::ceil(1.0 / T.period);
-        //std::cout << "preemptionLevel = " << T.preemptionLevel << std::endl;
 
         T.wcc = wcc_dist(generator);
-        //std::cout << "wcc = " << T.wcc << std::endl;
 
         T.rc = T.wcc;
 
@@ -58,55 +52,54 @@ void Scheduler::Init(void) {
 
     //calculate_scheduling_points();
 
-    // Backup initial task set
-    //initialTaskSet = taskSet;
-    //SortTaskSet_byPeriod();
-
-    //LowSpeed = calculate_low_speed();
     StaticF();
 }
 
 void Scheduler::Start(void) {
+    Task arrived_task;
+    Task next_task;
     while (upTime < duration) {
         std::cout << "upTime: " << upTime << std::endl;
 
         float execTime = calculate_exec_time();
 
-        // TODO: Debug why upTime becomes negative
         upTime += execTime;
 
-        // There may be multiple tasks arriving at the same time TODO: Check if need to loop
-        // TODO: After task finished, need to check blocked queue for eligible tasks
-        while (taskSet[0].arrivalTime <= nextArriveTime) {
-            // Append task that arrived into queue
-            Task temp_task = taskSet[0];
-            queue.push_back(temp_task);
-            SortQueue();
+        if (upTime >= nextArriveTime) {
+            // There may be multiple tasks arriving at the same time
+            while (taskSet[0].arrivalTime <= nextArriveTime) {
+                // Append task that arrived into queue
+                arrived_task = taskSet[0];
+                queue.push_back(arrived_task);
+                SortQueue();
 
-            // Replace the task in taskSet with the next instance
-            taskSet.erase(taskSet.begin());
-            temp_task.arrivalTime += temp_task.period;
-            taskSet.push_back(temp_task);
-            SortTaskSet();
+                // Replace the task in taskSet with the next instance
+                taskSet[0].arrivalTime += taskSet[0].period;
+                SortTaskSet();
+            }
         }
 
         // TODO: From here onwards, consider moving to a private function called ContextSwitch
         // If no tasks are running, run the first task on ready queue
         if (runningTask == NULL) {
-            Task temp_task = queue[0];
-            runningTask = &temp_task;
-            runningTask->startExecTime = upTime;
-            queue.erase(queue.begin());
-            //systemCeiling = runningTask->resource->ceiling;
+            if (queue.size() != 0) {
+                next_task = queue[0];
+                runningTask = &next_task;
+                runningTask->startExecTime = upTime;
+                queue.erase(queue.begin());
+            }
         }
         // check queue if there is any higher priority task to preempt the current task
         else {  
-            if (queue[0].period < runningTask->period) {
-                queue.push_back(*runningTask);
-                Task temp_task = queue[0];
-                runningTask = &temp_task;
-                runningTask->startExecTime = upTime;
-                SortQueue();
+            if (queue.size() != 0) {
+                if (queue[0].period < runningTask->period) {
+                    queue.push_back(*runningTask);
+                    Task next_task = queue[0];
+                    runningTask = &next_task;
+                    runningTask->startExecTime = upTime;
+                    queue.erase(queue.begin());
+                    SortQueue();
+                }
             }
         }
     }
@@ -182,6 +175,7 @@ void Scheduler::StaticF(void) {
     }
 
     for (std::size_t i = 0; i < taskSet.size(); i++) {
+        taskSet[i].staticFrequency = static_frequency;
         taskSet[i].frequency = static_frequency;
     }
 }
@@ -189,7 +183,7 @@ void Scheduler::StaticF(void) {
 void Scheduler::AdjustF(Task *nextTask, float rcet) {
     float deadline = runningTask->arrivalTime + runningTask->period;
     float slack = deadline - runningTask->startExecTime - rcet;
-    float nextTaskFrequency = nextTask->wcc / ((nextTask->wcc / nextTask->frequency) + slack);
+    float nextTaskFrequency = nextTask->wcc / ((nextTask->wcc / nextTask->staticFrequency) + slack);
     nextTask->frequency = GetSupportedSpeed(nextTaskFrequency);
 }
 
@@ -282,8 +276,11 @@ float Scheduler::calculate_exec_time(void) {
 
     float execTime = std::min({execTime_arrive, execTime_finish, execTime_queue});
 
-    // Add to total power consumption (Joules)
     if (runningTask != NULL) {
+        runningTask->burstTime += execTime;
+        runningTask->rc -= (runningTask->frequency * execTime);
+        
+        // Add to total power consumption (Joules)
         float wattage = get_wattage(runningTask->frequency);
         std::cout << "wattage: " << wattage << std::endl;
         totalPC += execTime * wattage; 
@@ -294,18 +291,16 @@ float Scheduler::calculate_exec_time(void) {
     }
 
     if (execTime == execTime_queue) {
-        runningTask->burstTime += execTime;
-        runningTask->rc -= (runningTask->frequency * execTime);
+        //runningTask->burstTime += execTime;
+        //runningTask->rc -= (runningTask->frequency * execTime);
         handle_late_task(queueTask_index);  //queueTask_index won't be -1 in this case
     }
 
     return execTime;
 }
 
-// returns index to task in queue
 int Scheduler::check_earliest_queue_task(void) {
     if (queue.size() <= 0) {
-        // Return infinity if no task in queue
         return -1;
     }
 
@@ -329,8 +324,6 @@ void Scheduler::handle_finished_task(float rcet) {
 
     Task *nextTask = &queue[0];
     AdjustF(nextTask, rcet);
-    runningTask->burstTime += rcet;
-    runningTask->rc = 0;
     totalTaskFinished += 1;
     runningTask = NULL;
 }
@@ -338,7 +331,6 @@ void Scheduler::handle_finished_task(float rcet) {
 void Scheduler::handle_late_task(int index) {
     Task lateTask = queue[index];
     std::cout << "Task " << lateTask.index << " is late\n";
-    // TODO: Check if need to erase from queue
     queue.erase(std::next(queue.begin(), index));
     totalLateCount += 1;
 }

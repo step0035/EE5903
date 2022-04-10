@@ -3,7 +3,7 @@
 
 int main(void) {
     float duration = 100000.0;
-    int no_of_tasks = 50;
+    int no_of_tasks = 10;
     int no_of_resources = 1;
     Scheduler scheduler(duration, no_of_tasks, no_of_resources);
 

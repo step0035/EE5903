@@ -10,5 +10,6 @@ class Task {
         float rc = wcc;                       // Remaining computation amount
         float burstTime = 0;
         float frequency;
+        float staticFrequency;
         std::vector<float> scheduling_points;
 };

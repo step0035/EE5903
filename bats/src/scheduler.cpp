@@ -71,6 +71,8 @@ void Scheduler::Init(void) {
 
 void Scheduler::Start(void) {
     while (upTime < duration) {
+        Task arrived_task;
+        Task next_task;
         std::cout << "upTime: " << upTime << std::endl;
 
         if (currentSpeed > LowSpeed)
@@ -80,47 +82,52 @@ void Scheduler::Start(void) {
 
         upTime += execTime;
 
-        // There may be multiple tasks arriving at the same time TODO: Check if need to loop
-        while (taskSet[0].arrivalTime <= nextArriveTime) {
-            // Append task that arrived into queue
-            Task temp_task = taskSet[0];
-            queue.push_back(temp_task);
-            SortQueue();
+        if (upTime >= nextArriveTime) {
+            // There may be multiple tasks arriving at the same time TODO: Check if need to loop
+            while (taskSet[0].arrivalTime <= nextArriveTime) {
+                // Append task that arrived into queue
+                Task arrived_task = taskSet[0];
+                queue.push_back(arrived_task);
+                SortQueue();
 
-            // Replace the task in taskSet with the next instance
-            taskSet.erase(taskSet.begin());
-            temp_task.arrivalTime += temp_task.period;
-            taskSet.push_back(temp_task);
-            SortTaskSet();
+                // Replace the task in taskSet with the next instance
+                taskSet[0].arrivalTime += taskSet[0].period;
+                SortTaskSet();
+            }
         }
 
         // TODO: From here onwards, consider moving to a private function called ContextSwitch
         // If no tasks are running, run the first task on ready queue
         if (runningTask == NULL) {
-            Task temp_task = queue[0];
-            runningTask = &temp_task;
-            queue.erase(queue.begin());
-            systemCeiling = runningTask->resource->ceiling;
+            if (queue.size() != 0) {
+                Task next_task = queue[0];
+                runningTask = &next_task;
+                queue.erase(queue.begin());
+                systemCeiling = runningTask->resource->ceiling;
+            }
         }
         // check queue if any task fit the criteria to preempt the current task
         // 1. It is the highest priority task in the queue (compare using period)
         // 2. It has a preemption level higher than system ceiling (compare using period)
         else {  
-            if (queue[0].period < runningTask->period) {
-                if (queue[0].period < systemCeiling) {     // Check for blocking 
-                    queue.push_back(*runningTask);
-                    Task temp_task = queue[0];
-                    runningTask = &temp_task;
-                    SortQueue();
-                }
-                else {
-                    // Calculate high speed
-                    queue[0].blocked = true;
-                    float newSpeed = calculate_high_speed(queue[0]);
+            if (queue.size() != 0) {
+                if (queue[0].period < runningTask->period) {
+                    if (queue[0].period < systemCeiling) {     // Check for blocking 
+                        queue.push_back(*runningTask);
+                        Task next_task = queue[0];
+                        runningTask = &next_task;
+                        queue.erase(queue.begin());
+                        SortQueue();
+                    }
+                    else {
+                        // Calculate high speed
+                        queue[0].blocked = true;
+                        float newSpeed = calculate_high_speed(queue[0]);
 
-                    // Set speed to high if calculated high speed is higher than currentSpeed
-                    if (newSpeed > currentSpeed) {
-                        currentSpeed = newSpeed;
+                        // Set speed to high if calculated high speed is higher than currentSpeed
+                        if (newSpeed > currentSpeed) {
+                            currentSpeed = newSpeed;
+                        }
                     }
                 }
             }
@@ -226,7 +233,6 @@ float Scheduler::calculate_exec_time(void) {
     float execTime_finish;
     float execTime_queue;
 
-    // TODO: wcc might be wcct
     if (runningTask != NULL) {
         execTime_finish = runningTask->rc / currentSpeed; 
     }
@@ -248,20 +254,25 @@ float Scheduler::calculate_exec_time(void) {
 
     float execTime = std::min({execTime_arrive, execTime_finish, execTime_queue});
 
-    // Add to total power consumption (Joules)
-    float wattage = get_wattage(currentSpeed);
-    std::cout << "wattage: " << wattage << std::endl;
-    totalPC += execTime * wattage; 
+    if (runningTask != NULL) {
+        runningTask->burstTime += execTime;
+        runningTask->rc -= (currentSpeed * execTime);
+
+        // Add to total power consumption (Joules)
+        float wattage = get_wattage(currentSpeed);
+        std::cout << "wattage: " << wattage << std::endl;
+        totalPC += execTime * wattage; 
+    }
 
     if (execTime == execTime_finish) {
-        runningTask->burstTime += execTime;
-        runningTask->rc = 0;
+        //runningTask->burstTime += execTime;
+        //runningTask->rc = 0;
         handle_finished_task();
     }
 
     if (execTime == execTime_queue) {
-        runningTask->burstTime += execTime;
-        runningTask->rc -= (currentSpeed * execTime);
+        //runningTask->burstTime += execTime;
+        //runningTask->rc -= (currentSpeed * execTime);
         handle_late_task(queueTask_index);  //queueTask_index won't be -1 in this case
     }
 
