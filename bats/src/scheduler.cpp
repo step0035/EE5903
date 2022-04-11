@@ -21,7 +21,7 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
     std::default_random_engine generator(2);
     std::uniform_int_distribution<int> arrivaltime_dist(0, 1000);
     std::uniform_int_distribution<int> period_dist(20, 5000);
-    //std::uniform_real_distribution<float> wcc_dist(1, 5);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
+    std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
     std::uniform_int_distribution<int> resource_dist(0, resourceList.size() - 1);
 
     std::cout << "no_of_tasks = " << no_of_tasks << std::endl << std::endl;
@@ -33,7 +33,7 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
 
         T.period = period_dist(generator);
 
-        std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
+        //std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
 
         T.wcc = wcc_dist(generator);
 

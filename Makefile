@@ -15,7 +15,7 @@ FTPART_SRC_O = $(patsubst %.c, %.o, $(FTPART_SRC))
 FTPART_INC_FLAG = -I $(FTPART_INCDIR) 
 
 CC = g++
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -Wno-unused-but-set-variable
 
 all: bats ftpart
 

@@ -1,10 +1,11 @@
 #include <iostream>
 #include "scheduler.h"
+#include "config.h"
 
 int main(void) {
     float duration = 100000.0;
-    int no_of_tasks = 10;
-    int no_of_resources = 1;
+    int no_of_tasks = NO_OF_TASKS;
+    int no_of_resources = NO_OF_RESOURCES;
     Scheduler scheduler(duration, no_of_tasks, no_of_resources);
 
     scheduler.Init();
@@ -14,6 +15,8 @@ int main(void) {
     std::cout << "totalTaskFinished: " << scheduler.totalTaskFinished << std::endl;
     std::cout << "LowSpeed: " << scheduler.LowSpeed << std::endl;
     std::cout << "totalPC: " << scheduler.totalPC << std::endl;
+    float ratio = static_cast<float> (scheduler.totalLateCount) / (static_cast<float> (scheduler.totalLateCount + scheduler.totalTaskFinished));
+    std::cout << "Late task ratio: " << ratio << std::endl;
 }
 
 

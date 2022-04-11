@@ -4,33 +4,36 @@
 #include <algorithm>
 #include "scheduler.h"
 
-Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet) {
+Scheduler::Scheduler(float Duration, int no_of_tasks) {
     // Set duration
     duration = Duration;
 
     // Initialize taskSet
     std::random_device rd;
     //std::default_random_engine generator(rd());     // use this for randomized seeding
-    std::default_random_engine generator(1);
+    std::default_random_engine generator(2);
     std::uniform_int_distribution<int> arrivaltime_dist(0, 1000);
     std::uniform_int_distribution<int> period_dist(20, 5000);
-    //std::uniform_real_distribution<float> wcc_dist(1, 5);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
-    //std::uniform_int_distribution<int> resource_dist(0, resourceList.size() - 1);
+    std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
+
+    // resource_dist and dummy are not needed for FTPART, it is to ensure that the same task set is used in BATS algorithm, less the resource
+    std::uniform_int_distribution<int> resource_dist(0, 1);
+    int dummy;
 
     std::cout << "no_of_tasks = " << no_of_tasks << std::endl << std::endl;
     for (int i=0; i < no_of_tasks; i++) {
         Task T;
 
         T.arrivalTime = arrivaltime_dist(generator);
-        //T.arrivalTime = 0;
 
         T.period = period_dist(generator);
-
-        std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
 
         T.wcc = wcc_dist(generator);
 
         T.rc = T.wcc;
+
+        // not used, just to ensure task set consistency
+        dummy = static_cast<std::size_t> (resource_dist(generator));
 
     taskSet.push_back(T);
     std::cout << std::endl;
@@ -39,8 +42,7 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, std::array<float, 6> Speed
     // Sort tasks by arrivalTime in non-descending order
     SortTaskSet();
 
-    // Initialize cpuSpeedSet
-    cpuSpeedSet = SpeedSet;
+    // Sort the cpuSpeedSet
     std::sort(cpuSpeedSet.begin(), cpuSpeedSet.end());
 }
 
@@ -178,6 +180,8 @@ void Scheduler::StaticF(void) {
         taskSet[i].staticFrequency = static_frequency;
         taskSet[i].frequency = static_frequency;
     }
+
+    overallStaticFrequency = static_frequency;
 }
 
 void Scheduler::AdjustF(Task *nextTask, float rcet) {

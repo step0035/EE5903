@@ -10,10 +10,7 @@ class Scheduler {
         std::vector<Task> initialTaskSet;         // Backup of the initial task set, used for calculating the high speed
         std::vector<Task> queue;
         Task *runningTask = NULL;
-        std::array<float, 6> cpuSpeedSet;         // Assume normalized values from BATS paper
-        //float currentSpeed;
-        //float LowSpeed;                           // Initial LOW speed
-        //int systemCeiling = std::numeric_limits<int>::max(); // systemCeiling should be 0 when no resources are used, but since we are comparing the period, we init this with infinity
+        std::array<float, 6> cpuSpeedSet = {1.0, 0.83, 0.67, 0.50, 0.33, 0.17};         // Assume normalized values from BATS paper
         float duration;
         float upTime = 0;
         float totalPC = 0;        // Total power consumption
@@ -21,13 +18,14 @@ class Scheduler {
         bool currentTaskFinished = false;
         int totalTaskFinished = 0;
         int totalLateCount = 0;
+        float overallStaticFrequency;
 
         /*
          * Constructor for Scheduler
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
-        Scheduler(float Duration, int no_of_tasks, std::array<float, 6> SpeedSet);
+        Scheduler(float Duration, int no_of_tasks);
 
         /*
          * Initialize the task set
