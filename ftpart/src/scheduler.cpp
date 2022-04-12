@@ -288,6 +288,12 @@ float Scheduler::calculate_exec_time(void) {
         float wattage = get_wattage(runningTask->frequency);
         std::cout << "wattage: " << wattage << std::endl;
         totalPC += execTime * wattage; 
+        
+        // Ignore, for data analysis
+        if (static_cast<int> (std::floor(upTime)) % 50 == 0) {
+            upTimeSeries.push_back(upTime);
+            speedSeries.push_back(runningTask->frequency);
+        }
     }
 
     if (execTime == execTime_finish) {

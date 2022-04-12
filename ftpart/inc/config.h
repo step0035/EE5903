@@ -1,1 +1,1 @@
-#define NO_OF_TASKS     500
+#define NO_OF_TASKS     10

@@ -19,6 +19,8 @@ class Scheduler {
         int totalTaskFinished = 0;
         int totalLateCount = 0;
         float overallStaticFrequency;
+        std::vector<float> upTimeSeries;
+        std::vector<float> speedSeries;
 
         /*
          * Constructor for Scheduler

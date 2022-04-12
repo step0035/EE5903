@@ -22,6 +22,8 @@ class Scheduler {
         bool currentTaskFinished = false;
         int totalTaskFinished = 0;
         int totalLateCount = 0;
+        std::vector<float> upTimeSeries;
+        std::vector<float> speedSeries;
 
         /*
          * Constructor for Scheduler

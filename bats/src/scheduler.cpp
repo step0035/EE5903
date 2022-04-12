@@ -74,6 +74,8 @@ void Scheduler::Start(void) {
         Task arrived_task;
         Task next_task;
         std::cout << "upTime: " << upTime << std::endl;
+        upTimeSeries.push_back(upTime);
+        speedSeries.push_back(currentSpeed);
 
         if (currentSpeed > LowSpeed)
             std::cout << "================================================HIGHER THAN LOW SPEED===============================================\n";
