@@ -31,6 +31,10 @@ You may also choose to build them separately
 make bats
 make ftpart
 ```
+To delete the output binaries
+```
+make clean
+```
 
 
 ## Configurations
