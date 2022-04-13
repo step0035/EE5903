@@ -19,11 +19,11 @@ class Scheduler {
         int totalTaskFinished = 0;
         int totalLateCount = 0;
         float overallStaticFrequency;
-        std::vector<float> upTimeSeries;
-        std::vector<float> speedSeries;
 
         /*
          * Constructor for Scheduler
+         * @Duration: the duration of the entire simulation in seconds
+         * @no_of_tasks: the number of tasks in the task set
          * - Generate random taskSet
          * - Setup CPU Speed, taskSet and queue
          */
@@ -31,15 +31,17 @@ class Scheduler {
 
         /*
          * Initialize the task set
-         * - calculates initial LOW speed
+         * - assign indexes to tasks in the task set
+         * - calculates initial LOW speed using StaticF
          */
         void Init(void);
 
         /*
          * Starts the scheduler and start counting up
-         * - calls background_check every unit time
          */
         void Start(void);
+
+    private:
 
         /*
          * Sort the taskSet by arrivalTime in non-descending order
@@ -58,31 +60,63 @@ class Scheduler {
          */
         void SortQueue(void);
 
-    private:
-
         /*
          * StaticF algorithm
+         * - Calculates the static frequency, of all the tasks
          */
         void StaticF(void);
 
         /*
          * AdjustF algorithm
+         * @nextTask: a pointer to the next task to be run on the CPU
+         * @rcet: the remaining computation amount of the current task
+         * - Adjust the speed of the CPU for the next task, if there
+         *   exists slack time upon completion of current task
          */
         void AdjustF(Task *nextTask, float rcet);
         
+        /*
+         * Execute until next scheduling point
+         * @retval: amount of execution time in seconds
+         * - Next task arrives
+         * - Current task finish executing, call @handle_finish_task
+         * - Task in queue becomes late, call @handle_late_task
+         */
         float calculate_exec_time(void);
 
+        /*
+         * Checks which task is next to be late in queue
+         * @retval: index of the task that is next to be late
+         *          or -1 if no tasks in queue
+         */
         int check_earliest_queue_task(void);
 
+        /*
+         * Called when a task is finished
+         * @rcet: remaining computation amount of the task
+         * - Set speed to LOW speed if a blocked task finished executing
+         * - Reset the system ceiling once the task unlocks the resource
+         */
         void handle_finished_task(float rcet); 
 
+        /*
+         * Called when a task missed its deadline
+         * - Discard task from queue
+         */
         void handle_late_task(int index);
 
-        float get_wattage(float);
+        /*
+         * Gets the wattage of the running speed
+         * @speed: the current speed of the CPU
+         * @retval: the wattage of the speed
+         */
+        float get_wattage(float speed);
 
-        void calculate_scheduling_points(void);
-
-        float calculate_eflb(Task T, int q);
-
+        /*
+         * Gets the actual speed that is supported by the CPU
+         * @speed: the calculated target speed to achieve
+         * @reval: the lowest speed in the task set that is
+         *         higher than the calculated target speed
+         */
         float GetSupportedSpeed(float speed);
 };

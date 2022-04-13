@@ -2,6 +2,7 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include "config.h"
 #include "scheduler.h"
 
 Scheduler::Scheduler(float Duration, int no_of_tasks) {
@@ -11,10 +12,10 @@ Scheduler::Scheduler(float Duration, int no_of_tasks) {
     // Initialize taskSet
     std::random_device rd;
     //std::default_random_engine generator(rd());     // use this for randomized seeding
-    std::default_random_engine generator(2);
-    std::uniform_int_distribution<int> arrivaltime_dist(0, 1000);
-    std::uniform_int_distribution<int> period_dist(20, 5000);
-    std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);               // (WCC / Lowest_Speed) < Smallest_T, thus, WCC < (Smallest_T * Lowest_Speed), choose 0.15 as max
+    std::default_random_engine generator(CONFIG_RANDOM_NUMBER);
+    std::uniform_int_distribution<int> arrivaltime_dist(CONFIG_ARRIVALTIME_LOW, CONFIG_ARRIVALTIME_HIGH);
+    std::uniform_int_distribution<int> period_dist(CONFIG_PERIOD_LOW, CONFIG_PERIOD_HIGH);
+    std::uniform_real_distribution<float> wcc_dist(CONFIG_WCCT_LOW, CONFIG_WCCT_HIGH);
 
     // resource_dist and dummy are not needed for FTPART, it is to ensure that the same task set is used in BATS algorithm, less the resource
     std::uniform_int_distribution<int> resource_dist(0, 1);
@@ -52,8 +53,6 @@ void Scheduler::Init(void) {
         taskSet[i].index = i;
     }
 
-    //calculate_scheduling_points();
-
     StaticF();
 }
 
@@ -81,7 +80,6 @@ void Scheduler::Start(void) {
             }
         }
 
-        // TODO: From here onwards, consider moving to a private function called ContextSwitch
         // If no tasks are running, run the first task on ready queue
         if (runningTask == NULL) {
             if (queue.size() != 0) {
@@ -127,38 +125,7 @@ void Scheduler::SortQueue(void) {
             );
 }
 
-/*
- * Private Functions
- */
-
 void Scheduler::StaticF(void) {
-#if 0
-    std::size_t index = 0;
-    float eflb;
-    float max_eflb = 0;
-    std::size_t max_eflb_index;
-    int q = 0;
-
-    while (index <= taskSet.size()) {
-        for (std::size_t i = index; i <= taskSet.size(); i++) {
-            // Calculate the eflb for each task
-            // taskSet sorted by descending priority
-            eflb = calculate_eflb(taskSet[i], q);
-            std::cout << "eflb: " << eflb << std::endl;
-            if (eflb > max_eflb) {
-                max_eflb = eflb;
-                max_eflb_index = i;
-            }
-        }
-
-        for (std::size_t i = index; i <= max_eflb_index; i++) {
-            taskSet[i].SF = GetSupportedSpeed(max_eflb);
-        }
-
-        q = max_eflb_index;
-        index = max_eflb_index + 1;
-    }
-#endif
     float static_frequency;
     float target_speed = 0;
 
@@ -166,11 +133,7 @@ void Scheduler::StaticF(void) {
         target_speed += (taskSet[i].wcc / taskSet[i].period);
     }
 
-    //target_speed /= taskSet.size();
-    std::cout << "target_speed: " << target_speed << std::endl;
-
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
-        std::cout << "speed now is: " << cpuSpeedSet[i] << std::endl;
         static_frequency = cpuSpeedSet[i];
         if (target_speed <= static_frequency)
             break;
@@ -191,59 +154,10 @@ void Scheduler::AdjustF(Task *nextTask, float rcet) {
     nextTask->frequency = GetSupportedSpeed(nextTaskFrequency);
 }
 
-#if 0
-float Scheduler::calculate_eflb(Task T, int q) {
-    float min = std::numeric_limits<float>::max();
-    //float q_cumulative = 0;
-    //float high_priority_cumulative = 0;
-    float temp_eflb;
-
-    for (std::size_t i = 0; i < T.scheduling_points.size(); i++) {
-        float sum_of_product_top = 0;
-        for (std::size_t p = q; p <= static_cast<std::size_t> (T.index); p++) {
-            sum_of_product_top += (T.wcc * (T.scheduling_points[i] / T.period));
-        }
-
-        float sum_of_product_bot = 0;
-        for (std::size_t r = 0; r < static_cast<std::size_t> (q); r++) {
-           sum_of_product_bot += ((T.wcc / T.frequency) * (T.scheduling_points[i] / T.period));
-        }
-
-        temp_eflb = sum_of_product_top / (T.scheduling_points[i] - sum_of_product_bot);
-        if (temp_eflb < min) {
-            min = temp_eflb;
-        }
-    }
-
-    return min;
-}
-#endif
-
-#if 0
-void Scheduler::calculate_scheduling_points(void) {
-    for (std::size_t i = 0; i < taskSet.size(); i++) {
-        //Task T = taskSet[i];
-        for (std::size_t j = 0; j <= i; j++) {
-            int arrival = taskSet[j].arrivalTime;
-            int period = taskSet[j].period;
-            arrival += period;
-            while (arrival < duration) {
-                taskSet[i].scheduling_points.push_back(arrival);
-                arrival += period;
-            }
-        }
-
-        std::sort(taskSet[i].scheduling_points.begin(), taskSet[i].scheduling_points.end());
-    }
-}
-#endif
-
 float Scheduler::GetSupportedSpeed(float speed) {
     float SupportedSpeed;
-    std::cout << "target_speed: " << speed << std::endl;
 
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
-        std::cout << "speed now is: " << cpuSpeedSet[i] << std::endl;
         SupportedSpeed = cpuSpeedSet[i];
         if (speed <= SupportedSpeed)
             break;
@@ -253,12 +167,11 @@ float Scheduler::GetSupportedSpeed(float speed) {
 }
 
 float Scheduler::calculate_exec_time(void) {
-    nextArriveTime = (float) taskSet[0].arrivalTime;    // Next task arrive at this time
-    float execTime_arrive = nextArriveTime - upTime;           // Time taken to wait for next task arrival
+    nextArriveTime = (float) taskSet[0].arrivalTime;              // Next task arrive at this time
+    float execTime_arrive = nextArriveTime - upTime;              // Time taken to wait for next task arrival
     float execTime_finish;
     float execTime_queue;
 
-    // TODO: wcc might be wcct
     if (runningTask != NULL) {
         execTime_finish = runningTask->rc / runningTask->frequency; 
     }
@@ -286,14 +199,7 @@ float Scheduler::calculate_exec_time(void) {
         
         // Add to total power consumption (Joules)
         float wattage = get_wattage(runningTask->frequency);
-        std::cout << "wattage: " << wattage << std::endl;
         totalPC += execTime * wattage; 
-        
-        // Ignore, for data analysis
-        if (static_cast<int> (std::floor(upTime)) % 50 == 0) {
-            upTimeSeries.push_back(upTime);
-            speedSeries.push_back(runningTask->frequency);
-        }
     }
 
     if (execTime == execTime_finish) {
@@ -301,8 +207,6 @@ float Scheduler::calculate_exec_time(void) {
     }
 
     if (execTime == execTime_queue) {
-        //runningTask->burstTime += execTime;
-        //runningTask->rc -= (runningTask->frequency * execTime);
         handle_late_task(queueTask_index);  //queueTask_index won't be -1 in this case
     }
 
@@ -328,7 +232,6 @@ int Scheduler::check_earliest_queue_task(void) {
     return earliest_task_index;
 }
 
-// TODO: Running task might be late also
 void Scheduler::handle_finished_task(float rcet) {
     std::cout << "Task " << runningTask->index << " finished\n";
 

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include "config.h"
 #include "scheduler.h"
 
 Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
@@ -18,10 +19,10 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
     // Initialize taskSet
     std::random_device rd;
     //std::default_random_engine generator(rd());     // use this for randomized seeding
-    std::default_random_engine generator(2);
-    std::uniform_int_distribution<int> arrivaltime_dist(0, 1000);
-    std::uniform_int_distribution<int> period_dist(20, 5000);
-    std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
+    std::default_random_engine generator(CONFIG_RANDOM_NUMBER);
+    std::uniform_int_distribution<int> arrivaltime_dist(CONFIG_ARRIVALTIME_LOW, CONFIG_ARRIVALTIME_HIGH);
+    std::uniform_int_distribution<int> period_dist(CONFIG_PERIOD_LOW, CONFIG_PERIOD_HIGH);
+    std::uniform_real_distribution<float> wcc_dist(CONFIG_WCCT_LOW, CONFIG_WCCT_HIGH);
     std::uniform_int_distribution<int> resource_dist(0, resourceList.size() - 1);
 
     std::cout << "no_of_tasks = " << no_of_tasks << std::endl << std::endl;
@@ -29,11 +30,8 @@ Scheduler::Scheduler(float Duration, int no_of_tasks, int no_of_resources) {
         Task T;
 
         T.arrivalTime = arrivaltime_dist(generator);
-        //T.arrivalTime = 0;
 
         T.period = period_dist(generator);
-
-        //std::uniform_real_distribution<float> wcc_dist(0.5, 5.0);
 
         T.wcc = wcc_dist(generator);
 
@@ -77,15 +75,12 @@ void Scheduler::Start(void) {
         upTimeSeries.push_back(upTime);
         speedSeries.push_back(currentSpeed);
 
-        if (currentSpeed > LowSpeed)
-            std::cout << "================================================HIGHER THAN LOW SPEED===============================================\n";
-
         float execTime = calculate_exec_time();
 
         upTime += execTime;
 
         if (upTime >= nextArriveTime) {
-            // There may be multiple tasks arriving at the same time TODO: Check if need to loop
+            // There may be multiple tasks arriving at the same time
             while (taskSet[0].arrivalTime <= nextArriveTime) {
                 // Append task that arrived into queue
                 Task arrived_task = taskSet[0];
@@ -98,7 +93,6 @@ void Scheduler::Start(void) {
             }
         }
 
-        // TODO: From here onwards, consider moving to a private function called ContextSwitch
         // If no tasks are running, run the first task on ready queue
         if (runningTask == NULL) {
             if (queue.size() != 0) {
@@ -167,10 +161,6 @@ void Scheduler::SortQueue(void) {
             );
 }
 
-/*
- * Private Functions
- */
-
 void Scheduler::InitResources(void) {
     for (std::size_t i = 0; i < resourceList.size(); i++) {
         for (std::size_t j = 0; j < taskSet.size(); j++) {
@@ -189,10 +179,7 @@ float Scheduler::calculate_low_speed(void) {
         target_speed += (taskSet[i].wcc / taskSet[i].period);
     }
 
-    std::cout << "target_speed: " << target_speed << std::endl;
-
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
-        std::cout << "low_speed now is: " << cpuSpeedSet[i] << std::endl;
         low_speed = cpuSpeedSet[i];
         if (target_speed <= low_speed)
             break;
@@ -217,10 +204,8 @@ float Scheduler::calculate_high_speed(Task T) {
 
     float high_speed;
     float target_speed = (B + sum_of_product) / period;
-    std::cout << "target_speed: " << target_speed << std::endl;
 
     for (std::size_t i = 0; i < cpuSpeedSet.size(); i++) {
-        std::cout << "high_speed now is: " << cpuSpeedSet[i] << std::endl;
         high_speed = cpuSpeedSet[i];
         if (target_speed <= high_speed)
             break;
@@ -230,7 +215,7 @@ float Scheduler::calculate_high_speed(Task T) {
 }
 
 float Scheduler::calculate_exec_time(void) {
-    nextArriveTime = (float) taskSet[0].arrivalTime;    // Next task arrive at this time
+    nextArriveTime = (float) taskSet[0].arrivalTime;           // Next task arrive at this time
     float execTime_arrive = nextArriveTime - upTime;           // Time taken to wait for next task arrival
     float execTime_finish;
     float execTime_queue;
@@ -245,7 +230,7 @@ float Scheduler::calculate_exec_time(void) {
     int queueTask_index = check_earliest_queue_task();
     if (queueTask_index != -1) {
         float QueueTask_deadline = queue[queueTask_index].arrivalTime + queue[queueTask_index].period;
-        execTime_queue = QueueTask_deadline - upTime;  // Time taken until the deadline of a task in queue is up
+        execTime_queue = QueueTask_deadline - upTime;          // Time taken until the deadline of a task in queue is up
     }
     else {
         execTime_queue = std::numeric_limits<float>::max();
@@ -262,20 +247,15 @@ float Scheduler::calculate_exec_time(void) {
 
         // Add to total power consumption (Joules)
         float wattage = get_wattage(currentSpeed);
-        std::cout << "wattage: " << wattage << std::endl;
         totalPC += execTime * wattage; 
     }
 
     if (execTime == execTime_finish) {
-        //runningTask->burstTime += execTime;
-        //runningTask->rc = 0;
         handle_finished_task();
     }
 
     if (execTime == execTime_queue) {
-        //runningTask->burstTime += execTime;
-        //runningTask->rc -= (currentSpeed * execTime);
-        handle_late_task(queueTask_index);  //queueTask_index won't be -1 in this case
+        handle_late_task(queueTask_index);                  //queueTask_index won't be -1 in this case
     }
 
     return execTime;
@@ -300,7 +280,6 @@ int Scheduler::check_earliest_queue_task(void) {
     return earliest_task_index;
 }
 
-// TODO: Running task might be late also
 void Scheduler::handle_finished_task(void) {
     std::cout << "Task " << runningTask->index << " finished\n";
 
@@ -320,6 +299,7 @@ void Scheduler::handle_late_task(int index) {
     Task lateTask = queue[index];
     std::cout << "Task " << lateTask.index << " is late\n";
     
+    // If the task was previously blocked, change back to low speed upon completion 
     if (lateTask.blocked) {
         lateTask.blocked = false;
         currentSpeed = LowSpeed;

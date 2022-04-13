@@ -34,13 +34,15 @@ class Scheduler {
 
         /*
          * Initialize the task set
+         * - assign indexes to the tasks in the task set
+         * - backup initial task set
          * - calculates initial LOW speed
+         * - initilaize resources
          */
         void Init(void);
 
         /*
          * Starts the scheduler and start counting up
-         * - calls background_check every unit time
          */
         void Start(void);
 
@@ -64,16 +66,21 @@ class Scheduler {
 
         /*
          * Calculate the initial LOW speed
+         * @retval: the low speed to be used initially
+         * - to be called before starting the scheduler
          */
         float calculate_low_speed(void);
 
         /*
          * Calculate the HIGH speed
+         * @retval: the high speed to be used
+         * - called whenever blocking occurs to speed up task completion
          */
         float calculate_high_speed(Task T);
         
         /*
          * Execute until next scheduling point
+         * @retval: amount of execution time in seconds
          * - Next task arrives
          * - Current task finish executing, call @handle_finish_task
          * - Task in queue becomes late, call @handle_late_task
@@ -82,8 +89,8 @@ class Scheduler {
 
         /*
          * Checks which task is next to be late in queue
-         * - Returns index of task
-         * - Returns -1 if no tasks in queue
+         * @retval: index of the task that is next to be late
+         *          or -1 if no tasks in queue
          */
         int check_earliest_queue_task(void);
 
@@ -96,6 +103,7 @@ class Scheduler {
 
         /*
          * Called when a task missed its deadline
+         * @index: the index of the late task
          * - Discard task from queue
          */
         void handle_late_task(int index);
@@ -110,7 +118,10 @@ class Scheduler {
         void InitResources(void);
 
         /*
-         * Gets the wattage of the running speed
+         * Gets the actual speed that is supported by the CPU
+         * @speed: the calculated target speed to achieve
+         * @reval: the lowest speed in the task set that is
+         *         higher than the calculated target speed
          */
         float get_wattage(float speed);
 };
