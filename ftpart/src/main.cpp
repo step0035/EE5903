@@ -8,8 +8,9 @@ int main(void) {
     Scheduler scheduler(duration, no_of_tasks);
 
     scheduler.Init();
-    std::cout << "duration: " << scheduler.duration << std::endl;
     scheduler.Start();
+    std::cout << std::endl << "========================= Simulation Result ============================" << std::endl;
+    std::cout << "duration: " << scheduler.duration << std::endl;
     std::cout << "Static Freqeuncy: " << scheduler.overallStaticFrequency << std::endl;
     std::cout << "totalLateCount: " << scheduler.totalLateCount << std::endl;
     std::cout << "totalTaskFinished: " << scheduler.totalTaskFinished << std::endl;

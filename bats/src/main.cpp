@@ -10,10 +10,11 @@ int main(void) {
 
     scheduler.Init();
     scheduler.Start();
+    std::cout << std::endl << "========================= Simulation Result ============================" << std::endl;
     std::cout << "duration: " << scheduler.duration << std::endl;
+    std::cout << "LowSpeed: " << scheduler.LowSpeed << std::endl;
     std::cout << "totalLateCount: " << scheduler.totalLateCount << std::endl;
     std::cout << "totalTaskFinished: " << scheduler.totalTaskFinished << std::endl;
-    std::cout << "LowSpeed: " << scheduler.LowSpeed << std::endl;
     std::cout << "totalPC: " << scheduler.totalPC << std::endl;
     float ratio = static_cast<float> (scheduler.totalLateCount) / (static_cast<float> (scheduler.totalLateCount + scheduler.totalTaskFinished));
     std::cout << "Late task ratio: " << ratio << std::endl;

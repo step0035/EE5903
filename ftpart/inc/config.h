@@ -1,4 +1,4 @@
-#define CONFIG_NO_OF_TASKS          150
+#define CONFIG_NO_OF_TASKS          10
 
 #define CONFIG_RANDOM_NUMBER        2
 #define CONFIG_ARRIVALTIME_LOW      0
