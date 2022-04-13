@@ -1,5 +1,10 @@
 # Power Aware Scheduling Algorithms
 
+## Algorithms
+
+1. Blocking Aware Two-Speed (BATS)
+2. Fault Tolerant Power Aware Real-Time (FTPART)
+
 ## Prerequisites
 
 It is recommended to run this simulation on Ubuntu or other Linux distributions
