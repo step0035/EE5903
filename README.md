@@ -1,33 +1,53 @@
 # Power Aware Scheduling Algorithms
 
-## 1. Blocking Aware Two Speeds
+## Prerequisites
 
-### Events
-  1. Task Arrival
-  2. Task Finished
-  3. Task Blocked
-  4. Resource Accessed
-  5. Resource Freed
+It is recommended to run this simulation on Ubuntu or other Linux distributions
 
-Before tasks starts executing, check for blocking potential
-  
-### Set fixed execution time for each CPU speed, relative to the WCET which is based on the lowest CPU speed
-- Assume that one cycle is required to execute one instruction, thus, CPI = 1
-- Using the equation
-  
-  ```
-  CPU Execution Time = Instruction Count * CPI * Clock Cycle Time
-                     = Instruction Count * (1 / Clock Speed)
-  ```
+Install required packages
+```
+sudo apt update
+sudo apt install build-essential make
+```
 
 
-Speed | Normalized Speed | Power Consumption | Exectution Time |
---- | --- | --- | --- |
-624 MHz | 1.00 | 925 mW  | - |
-520 MHz | 0.83 | 747 mW  | - |
-416 MHz | 0.67 | 570 mW  | - |
-312 MHz | 0.50 | 390 mW  | - |
-208 MHz | 0.33 | 279 mW  | - |
-104 MHz | 0.17 | 116 mW  | - |
-Idle    | -    | 15.4 mW | - |
- 
+## Building
+
+In this project root directory, run
+```
+make
+```
+Two binaries, `bats_sim` and `ftpart_sim`, will be outputted in the project root directory
+
+They are the BATS and FTPART algorithms respectively
+
+You may also choose to build them separately
+```
+make bats
+make ftpart
+```
+
+
+## Configurations
+
+To configure the simulation parameters, edit the respective config files for each algorithms
+
+Ensure that CONFIG_XXX_LOW is always lower or equal to CONFIG_XXX_HIGH
+
+BATS   => `bats/inc/config.h`
+
+FTPART => `ftpart/inc/config.h`
+
+
+## Running the Simulation
+
+To run the simulation
+```
+./bats_sim
+./ftpart_sim
+```
+
+
+## References
+* J. Wu, "BATS: An Energy-Efficient Approach to Real-Time Scheduling and Synchronization," 2014 IEEE Intl Conf on High Performance Computing and Communications, 2014 IEEE 6th Intl Symp on Cyberspace Safety and Security, 2014 IEEE 11th Intl Conf on Embedded Software and System (HPCC,CSS,ICESS), 2014, pp. 661-668, doi: 10.1109/HPCC.2014.96
+* P. Zhu, D. Luo and X. Chen, "Fault-tolerant and power-aware scheduling in embedded real-time systems," 2020 International Conference on Computer, Information and Telecommunication Systems (CITS), 2020, pp. 1-5, doi: 10.1109/CITS49457.2020.9232471
