@@ -3,24 +3,12 @@
 class Task {
     public:
         int index;
-        int arrivalTime;                // Range from 0 to 100
+        int arrivalTime;                // Time when task arrive
         int period;                     // Relative deadline is assume to be the period, the smaller the period, the higher the preemption level
-        //int preemptionLevel;            // Derived from period, preemptionLevel = ceil(1 / period), since we don't want it to be 0
-        float wcc;                        // Worst case computation amount
-        float rc = wcc;                       // Remaining computation amount
-        float burstTime = 0;
-        float waitTime = 0;                   // Total time when task has arrived but not currently executing
-        int criticalStart = 0;          // Assume 0
-        int criticalEnd;                // TODO: Assume whole burst time?
+        float wcc;                      // Worst case computation amount
+        float rc = wcc;                 // Remaining computation amount
+        float burstTime = 0;            // Time CPU spent executing the task
         float B;                        // Remaining critical section computation time
-        bool blocked = false;
-        Resource *resource;
-
-        void LockResource(void) {
-            resource->locked = true;
-        }
-
-        void UnlockResource(void) {
-            resource->locked = false;
-        }
+        bool blocked = false;           // Indicator for task's blocking status
+        Resource *resource;             // Resource required by the task
 };
